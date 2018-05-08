@@ -90,8 +90,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".WallpaperListActivity" android:theme="@style/BottomAnimStyle"/>
-        <activity android:name=".FavoriteListActivity" android:theme="@style/BottomAnimStyle"/>
+        <activity android:name=".WallpaperListActivity"/>
+        <activity android:name=".FavoriteListActivity"/>
 
         <receiver android:name="com.samsung.app.smartwallpaper.broadcastreceiver.MyBroadcastReceiver" >
             <intent-filter>

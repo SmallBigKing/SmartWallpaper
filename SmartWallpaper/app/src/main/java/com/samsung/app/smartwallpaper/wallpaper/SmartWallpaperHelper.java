@@ -191,8 +191,30 @@ public class SmartWallpaperHelper {
 
     public static final String EXTERNAL_MY_FAVORITE_WALLPAPER_DIR = Environment.getExternalStorageDirectory() + "/壁纸收藏夹";
     public static final String WALLPAPER_FILE_EXT = ".jpg";
-    //收藏壁纸
-    public boolean favoriteWallpaper(String hashcode){
+    public static void saveBitmap(Bitmap bitmap, String dstFileName){
+        try {
+            FileOutputStream fos = new FileOutputStream(dstFileName);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+        }
+    }
+    //收藏指定Drawable的壁纸
+    public static void favoriteWallpaper(Drawable drawable, String hashcode){
+        try {
+            String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
+            BitmapDrawable bitmapDrawable = (BitmapDrawable)drawable;
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+            FileOutputStream fos = new FileOutputStream(filepath);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+        }
+    }
+    //收藏当前壁纸
+    public boolean favoriteCurrentWallpaper(String hashcode){
         Bitmap wallpaper = getCurrentWallpaper();
         if(wallpaper == null) {
             return false;
@@ -212,14 +234,10 @@ public class SmartWallpaperHelper {
         }
         return true;
     }
-    public boolean unFavoriteWallpaper(String hashcode){
-        Bitmap wallpaper = getCurrentWallpaper();
-        if(wallpaper == null) {
-            return false;
-        }
+    public static boolean unFavoriteWallpaper(String hashcode){
         String filepath = EXTERNAL_MY_FAVORITE_WALLPAPER_DIR + File.separator + hashcode + WALLPAPER_FILE_EXT;
         File file = new File(filepath);
-        if(file.exists()){
+        if(file.exists() && file.isFile()){
             file.delete();
         }
         return true;

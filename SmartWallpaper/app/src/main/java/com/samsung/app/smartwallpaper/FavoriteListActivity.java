@@ -1,8 +1,13 @@
 package com.samsung.app.smartwallpaper;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -35,6 +40,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.samsung.app.smartwallpaper.command.Action;
 import com.samsung.app.smartwallpaper.command.CommandExecutor;
 import com.samsung.app.smartwallpaper.model.FavoriteWallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.PhotoViewPagerAdapter;
@@ -42,6 +48,7 @@ import com.samsung.app.smartwallpaper.model.WallpaperGridAdapter;
 import com.samsung.app.smartwallpaper.model.WallpaperItem;
 import com.samsung.app.smartwallpaper.view.PhotoViewPager;
 import com.samsung.app.smartwallpaper.view.WallpaperRecyclerView;
+import com.samsung.app.smartwallpaper.wallpaper.ChangeWallpaperService;
 import com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper;
 
 import java.io.File;
@@ -51,6 +58,7 @@ import java.io.FilenameFilter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -62,7 +70,7 @@ import static com.samsung.app.smartwallpaper.wallpaper.SmartWallpaperHelper.save
  */
 public class FavoriteListActivity extends Activity  implements View.OnClickListener,
         FavoriteWallpaperGridAdapter.CallBack, PhotoViewPagerAdapter.CallBack{
-    private final String TAG = "FavoriteListActivity";
+    private static final String TAG = "FavoriteListActivity";
     private Context mContext;
 
     private TextView tv_title;
@@ -90,6 +98,7 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
+
         mWallpaperItems = new ArrayList<>();
         setContentView(R.layout.favorite_list_layout);
         initView();
@@ -106,13 +115,40 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
         play_wallpaper.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                Toast.makeText(mContext, "isChecked="+isChecked, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(FavoriteListActivity.this, ChangeWallpaperService.class);
                 if(isChecked){
-
+                    //启动切换壁纸
+                    if (isServiceRunning(ChangeWallpaperService.class.getName())){
+                        Toast.makeText(mContext, "已开启自动切换壁纸服务", Toast.LENGTH_SHORT).show();
+//                        return;
+                    }else{
+                        Toast.makeText(mContext, "自动切换壁纸服务开启", Toast.LENGTH_SHORT).show();
+                    }
+                    intent.setAction(Action.ACTION_START_TIMER_CHANGE_WALLPAPER);
+                    startService(intent);
                 }else{
+                    intent.setAction(Action.ACTION_STOP_TIMER_CHANGE_WALLPAPER);
+                    startService(intent);
 
+                    stopService(intent);
+                    Toast.makeText(mContext, "自动切换壁纸服务关闭", Toast.LENGTH_SHORT).show();
                 }
+
+                SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putBoolean("enableChangeWallpaper", isChecked);
+                editor.apply();
             }
         });
+        SharedPreferences sp = getSharedPreferences("smartwallpaper_setting", Context.MODE_PRIVATE);
+        boolean enableChangeWallpaper = sp.getBoolean("enableChangeWallpaper", false);
+        if(enableChangeWallpaper || isServiceRunning(ChangeWallpaperService.class.getName())){
+            play_wallpaper.setChecked(true);
+        }else{
+            play_wallpaper.setChecked(false);
+        }
+
         ib_upload = (ImageButton)findViewById(R.id.ib_upload);
         ib_close = (ImageButton)findViewById(R.id.ib_close);
         pb_loadingwait = (ProgressBar)findViewById(R.id.pb_loadingwait);
@@ -164,6 +200,19 @@ public class FavoriteListActivity extends Activity  implements View.OnClickListe
 
             }
         });
+    }
+
+    /**
+     * 判断服务是否运行
+     */
+    private boolean isServiceRunning(final String className) {
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> info = activityManager.getRunningServices(Integer.MAX_VALUE);
+        if (info == null || info.size() == 0) return false;
+        for (ActivityManager.RunningServiceInfo aInfo : info) {
+            if (className.equals(aInfo.service.getClassName())) return true;
+        }
+        return false;
     }
 
     AsyncTask<String, Void, String> mLoadTask;

@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -58,7 +57,7 @@ public class SmartWallpaperHelper {
         mContext = context;
         wManager = WallpaperManager.getInstance(context);
 
-        Intent intent = new Intent(mContext, ChangeService.class);
+        Intent intent = new Intent(mContext, ChangeWallpaperService.class);
         pi = PendingIntent.getService(mContext, 0, intent, 0);
 
     }
@@ -69,6 +68,7 @@ public class SmartWallpaperHelper {
 //    }
 
     public synchronized void setLiveWallpaper(Class<?> cls) {
+        Log.d(TAG, "setLiveWallpaper");
         previousWallpaper = getCurrentWallpaper();
         curWallpaper = null;
         final Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
@@ -79,6 +79,7 @@ public class SmartWallpaperHelper {
 
     //设置主屏幕壁纸
     public synchronized boolean setHomeScreenWallpaper(Bitmap wallpaper){
+        Log.d(TAG, "setHomeScreenWallpaper-Bitmap="+wallpaper);
         if(wallpaper == null){
             return false;
         }
@@ -93,6 +94,7 @@ public class SmartWallpaperHelper {
         return true;
     }
     public synchronized boolean setHomeScreenWallpaper(Drawable wallpaper){
+        Log.d(TAG, "setHomeScreenWallpaper-Drawable="+wallpaper);
         if(wallpaper == null){
             return false;
         }
@@ -101,6 +103,7 @@ public class SmartWallpaperHelper {
     }
     //设置锁屏壁纸
     private void setLockScreenWallPaper(Bitmap wallpaper) {
+        Log.d(TAG, "setLockScreenWallPaper-");
         try {
             WallpaperManager mWallManager = WallpaperManager.getInstance(mContext);
             Class class1 = mWallManager.getClass();//获取类名
@@ -111,6 +114,7 @@ public class SmartWallpaperHelper {
         }
     }
     public Bitmap getCurrentWallpaper(){
+        Log.d(TAG, "getCurrentWallpaper");
         Drawable wallpaperDrawable = wManager.getDrawable();
         Bitmap wallpaper = ((BitmapDrawable) wallpaperDrawable).getBitmap();
         return wallpaper;
